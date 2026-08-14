@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="期权收益计算器">
+    <meta name="application-name" content="期权收益计算器">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1890ff">
+    <title>期权收益计算器</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%231890ff' width='100' height='100' rx='20'/><text x='50%' y='55%' text-anchor='middle' fill='white' font-size='60'>📊</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 12px;
+            background-color: #fff;
+            min-height: 100vh;
+        }
+        
+        .section {
+            margin-bottom: 16px;
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #333;
+        }
+        
+        .subtitle {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        /* 市场选择和交易方向 */
+        .header-section {
+            padding: 12px;
+            background-color: #fff;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .tabs-container {
+            display: flex;
+            margin-bottom: 12px;
+        }
+        
+        .market-tab, .direction-btn {
+            flex: 1;
+            text-align: center;
+            padding: 10px 8px;
+            border: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            background-color: #fff;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        .market-tab:first-child, .direction-btn:first-child {
+            border-radius: 6px 0 0 6px;
+        }
+        
+        .market-tab:last-child, .direction-btn:last-child {
+            border-radius: 0 6px 6px 0;
+        }
+        
+        .market-tab:not(:first-child), .direction-btn:not(:first-child) {
+            border-left: none;
+        }
+        
+        .market-tab.active, .direction-btn.active {
+            background-color: #1890ff;
+            color: #fff;
+            border-color: #1890ff;
+        }
+        
+        .current-selection {
+            text-align: center;
+            font-size: 16px;
+            font-weight: 600;
+            color: #1890ff;
+            padding: 8px 0;
+        }
+        
+        /* 输入组 */
+        .input-group {
+            margin-bottom: 12px;
+        }
+        
+        .input-label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 4px;
+            color: #666;
+        }
+        
+        .input, .select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 16px;
+            background-color: #fff;
+            transition: border-color 0.2s;
+        }
+        
+        .input:focus, .select:focus {
+            outline: none;
+            border-color: #1890ff;
+        }
+        
+        .select {
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+        }
+        
+        /* 按钮 */
+        .button {
+            width: 100%;
+            padding: 14px;
+            background-color: #1890ff;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 8px;
+            touch-action: manipulation;
+        }
+        
+        .button:active {
+            background-color: #096dd9;
+        }
+        
+        .button-secondary {
+            background-color: #722ed1;
+        }
+        
+        .button-secondary:active {
+            background-color: #5319b0;
+        }
+        
+        /* 计算结果 */
+        .result-box {
+            background-color: #fafafa;
+            padding: 16px;
+            border-radius: 6px;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        
+        .result-label {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .result-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .result-value.highlight {
+            color: #1890ff;
+            font-size: 18px;
+        }
+        
+        .result-note {
+            font-size: 12px;
+            color: #999;
+            line-height: 1.6;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        /* 收益风险可视化 */
+        .chart-container {
+            margin-top: 16px;
+            background-color: #fafafa;
+            border-radius: 6px;
+            padding: 12px;
+        }
+        
+        canvas {
+            width: 100%;
+            height: 250px;
+            display: block;
+        }
+        
+        /* 关闭按钮 */
+        .close-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            color: #666;
+        }
+        
+        .close-btn:active {
+            background-color: rgba(0,0,0,0.2);
+        }
+        
+        /* 计算过程模态窗口 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: block;
+            text-align: center;
+            padding-right: 30px;
+        }
+        
+        .calculation-process {
+            margin: 16px 0;
+        }
+        
+        .process-section {
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .process-section:last-child {
+            border-bottom: none;
+        }
+        
+        .section-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #333;
+        }
+        
+        .process-item {
+            display: flex;
+            margin-bottom: 10px;
+            align-items: flex-start;
+        }
+        
+        .process-label {
+            width: 100px;
+            font-size: 13px;
+            color: #666;
+            flex-shrink: 0;
+        }
+        
+        .process-value {
+            flex: 1;
+            font-size: 13px;
+            color: #333;
+            text-align: left;
+            word-break: break-all;
+        }
+        
+        .modal-footer {
+            margin-top: 16px;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .modal-btn {
+            padding: 10px 24px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            background-color: #fff;
+            color: #666;
+        }
+        
+        .modal-btn:active {
+            background-color: #f5f5f5;
+        }
+        
+        /* 离线指示器 */
+        .offline-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #fa8c16;
+            color: #fff;
+            text-align: center;
+            padding: 6px;
+            font-size: 12px;
+            z-index: 9999;
+            transform: translateY(-100%);
+            transition: transform 0.3s;
+        }
+        
+        .offline-indicator.show {
+            transform: translateY(0);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 375px) {
+            .container {
+                padding: 8px;
+            }
+            
+            .section {
+                padding: 12px;
+                margin-bottom: 10px;
+            }
+            
+            .title {
+                font-size: 16px;
+            }
+            
+            .process-label {
+                width: 85px;
+                font-size: 12px;
+            }
+            
+            .process-value {
+                font-size: 12px;
+            }
+        }
+        
+        /* 平板竖屏 (iPad Portrait) */
+        @media (min-width: 768px) and (max-width: 1023px) {
+            .container {
+                max-width: 720px;
+                padding: 20px;
+            }
+            
+            .section {
+                padding: 20px;
+            }
+            
+            .title {
+                font-size: 20px;
+            }
+            
+            canvas {
+                height: 300px;
+            }
+            
+            .input, .select {
+                padding: 14px;
+                font-size: 18px;
+            }
+            
+            .button {
+                padding: 16px;
+                font-size: 18px;
+            }
+        }
+        
+        /* 平板横屏 + 小桌面 (iPad Landscape / small desktop) */
+        @media (min-width: 1024px) {
+            body {
+                background-color: #e8e8e8;
+            }
+            
+            .container {
+                max-width: 960px;
+                padding: 24px;
+                border-radius: 12px;
+                margin: 20px auto;
+                min-height: auto;
+                box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            }
+            
+            .section {
+                padding: 20px;
+            }
+            
+            .title {
+                font-size: 20px;
+            }
+            
+            .input, .select {
+                padding: 12px 14px;
+                font-size: 15px;
+            }
+            
+            canvas {
+                height: 320px;
+            }
+        }
+        
+        /* 宽屏桌面 (Desktop wide) */
+        @media (min-width: 1280px) {
+            .container {
+                max-width: 1100px;
+                padding: 28px;
+            }
+            
+            /* 两栏布局：左侧输入 + 右侧结果 */
+            .app-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 24px;
+                align-items: start;
+            }
+            
+            .app-grid .input-column {
+                grid-column: 1;
+            }
+            
+            .app-grid .result-column {
+                grid-column: 2;
+                position: sticky;
+                top: 20px;
+            }
+            
+            .header-section {
+                grid-column: 1 / -1;
+            }
+            
+            .button-group {
+                grid-column: 1 / -1;
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 10px;
+            }
+            
+            .button-group .button {
+                margin-top: 0;
+            }
+            
+            .button-group .button-secondary {
+                margin-top: 0;
+            }
+            
+            canvas {
+                height: 360px;
+            }
+        }
+        
+        /* 安全区域适配 */
+        @supports (padding-bottom: env(safe-area-inset-bottom)) {
+            .container {
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+        }
+        
+        @supports (padding-left: env(safe-area-inset-left)) {
+            .container {
+                padding-left: max(12px, env(safe-area-inset-left));
+                padding-right: max(12px, env(safe-area-inset-right));
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 离线指示器 -->
+    <div class="offline-indicator" id="offlineIndicator">当前处于离线状态</div>
+    
+    <div class="container">
+        <div class="app-grid">
+        <!-- 市场选择和交易方向 -->
+        <div class="header-section input-column">
+            <!-- 市场选择（标签式切换） -->
+            <div class="tabs-container">
+                <div class="market-tab active" data-index="0" onclick="switchMarket(this)">
+                    <span>美股</span>
+                </div>
+                <div class="market-tab" data-index="1" onclick="switchMarket(this)">
+                    <span>港股</span>
+                </div>
+            </div>
+            
+            <!-- 交易方向（紧凑型按钮组） -->
+            <div class="tabs-container">
+                <div class="direction-btn" data-type="0" onclick="selectStrategy(this)">
+                    <span>Sell Call</span>
+                </div>
+                <div class="direction-btn active" data-type="1" onclick="selectStrategy(this)">
+                    <span>Sell Put</span>
+                </div>
+            </div>
+            
+            <!-- 显示当前选择的交易方向和期权类型 -->
+            <div class="current-selection" id="currentSelection">
+                Sell Put
+            </div>
+        </div>
+
+        <!-- 期权基础信息 -->
+        <div class="section input-column">
+            <div class="title">期权基础信息</div>
+            <div class="input-group">
+                <label class="input-label">行权价</label>
+                <input type="number" class="input" placeholder="请输入行权价" id="strikePrice" value="20" inputmode="decimal" />
+            </div>
+            <div class="input-group">
+                <label class="input-label">到期日</label>
+                <input type="date" class="input" id="expiryDate" />
+            </div>
+            <div class="input-group">
+                <label class="input-label">权利金</label>
+                <input type="number" class="input" placeholder="请输入权利金" id="premium" value="0.8" inputmode="decimal" />
+            </div>
+            <div class="input-group">
+                <label class="input-label">合约数量</label>
+                <input type="number" class="input" placeholder="请输入合约数量" id="contractQuantity" value="1" inputmode="numeric" />
+            </div>
+            <!-- 港股期权乘数输入 -->
+            <div class="input-group" id="multiplierGroup" style="display: none;">
+                <label class="input-label">港股期权乘数</label>
+                <input type="number" class="input" placeholder="请输入每合约对应股数" id="multiplier" value="1000" inputmode="numeric" />
+            </div>
+            
+            <!-- 手续费配置 -->
+            <div class="input-group">
+                <label class="input-label">手续费</label>
+                <input type="number" class="input" placeholder="请输入手续费" id="fee" value="2.52" inputmode="decimal" />
+            </div>
+        </div>
+
+        <!-- 计算按钮 -->
+        <div class="button-group">
+            <button class="button" onclick="calculate()">计算预期年化收益</button>
+            <button class="button button-secondary" onclick="toggleFormulas()">计算过程</button>
+            <button class="button" style="background-color: #888; margin-top: 4px; font-size: 13px; padding: 8px;" onclick="clearData()">清除数据</button>
+        </div>
+
+        <!-- 计算结果 -->
+        <div class="section result-column" id="resultSection" style="display: none;">
+            <div class="title">计算结果</div>
+            <div class="result-box">
+                <div class="result-item">
+                    <span class="result-label">总收益</span>
+                    <span class="result-value" id="totalProfit">0</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">预期年化收益率</span>
+                    <span class="result-value highlight" id="annualizedReturn">0%</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">投资回报率</span>
+                    <span class="result-value" id="returnOnInvestment">0%</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">剩余天数</span>
+                    <span class="result-value" id="daysToExpiry">0天</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">最大收益</span>
+                    <span class="result-value" id="maxProfit">0</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">最大损失</span>
+                    <span class="result-value" id="maxLoss">0</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">保证金要求</span>
+                    <span class="result-value" id="marginRequired">0</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">维持保证金</span>
+                    <span class="result-value" id="maintenanceMargin">0</span>
+                </div>
+                <div class="result-item" style="border-top: 1px dashed #e0e0e0; margin-top: 4px; padding-top: 12px;">
+                    <span class="result-label" style="color: #52c41a; font-weight: 600;">盈亏平衡价</span>
+                    <span class="result-value" id="breakEvenPrice" style="color: #52c41a;">0</span>
+                </div>
+                
+                <!-- 结果说明 -->
+                <div class="result-note">
+                    年化收益率：将投资回报率按照年化计算，反映长期投资收益水平。投资回报率：期权到期时的收益与保证金比率。剩余天数：从当前日期到期权到期日的天数。最大收益：策略可能获得的最大收益。最大损失：策略可能遭受的最大损失。盈亏平衡价：到期时标的资产价格在此水平时，交易盈亏为零。
+                </div>
+            </div>
+
+            <!-- 收益风险可视化 -->
+            <div class="chart-container">
+                <canvas id="profitLossChart"></canvas>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- 计算过程模态窗口 -->
+    <div class="modal" id="formulasModal" style="display: none;" onclick="toggleFormulas()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="close-btn" onclick="toggleFormulas()">×</div>
+            <span class="modal-title">计算过程</span>
+            <div class="calculation-process">
+                <div class="process-section">
+                    <span class="section-title">基本公式</span>
+                    <div class="process-item">
+                        <span class="process-label">投资回报率：</span>
+                        <span class="process-value">收益 / 成本 × 100%</span>
+                    </div>
+                    <div class="process-item">
+                        <span class="process-label">年化收益率：</span>
+                        <span class="process-value">投资回报率 × (365 ÷ 持有天数)</span>
+                    </div>
+                    <div class="process-item">
+                        <span class="process-label">最大收益：</span>
+                        <span class="process-value">权利金</span>
+                    </div>
+                    <div class="process-item">
+                        <span class="process-label">最大损失：</span>
+                        <span class="process-value">潜在无限</span>
+                    </div>
+                    <div class="process-item">
+                        <span class="process-label">保证金要求：</span>
+                        <span class="process-value">行权价 × 100%</span>
+                    </div>
+                    <div class="process-item">
+                        <span class="process-label">维持保证金：</span>
+                        <span class="process-value">保证金要求 × 75%</span>
+                    </div>
+                </div>
+                
+                <div class="process-section">
+                    <span class="section-title">成本与收益计算</span>
+                    <div class="process-item">
+                        <span class="process-label">总收益计算：</span>
+                        <span class="process-value">权利金收入 - 手续费</span>
+                    </div>
+                    <div class="process-item">
+                        <span class="process-label">投资回报率：</span>
+                        <span class="process-value">(总收益 ÷ 保证金) × 100%</span>
+                    </div>
+                    <div class="process-item">
+                        <span class="process-label">年化收益率：</span>
+                        <span class="process-value">投资回报率 × (365 ÷ 持有天数)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="modal-btn" onclick="toggleFormulas()">关闭</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let marketIndex = 0;
+        let strategyIndex = 1; // 默认Sell Put
+        let showFormulas = false;
+        
+        // 保存输入到 localStorage
+        function saveInputs() {
+            const data = {
+                marketIndex: marketIndex,
+                strategyIndex: strategyIndex,
+                strikePrice: document.getElementById('strikePrice').value,
+                expiryDate: document.getElementById('expiryDate').value,
+                premium: document.getElementById('premium').value,
+                contractQuantity: document.getElementById('contractQuantity').value,
+                multiplier: document.getElementById('multiplier').value,
+                fee: document.getElementById('fee').value
+            };
+            try {
+                localStorage.setItem('optionsCalculatorInputs', JSON.stringify(data));
+            } catch (e) {}
+        }
+        
+        // 从 localStorage 恢复输入
+        function loadInputs() {
+            try {
+                const saved = localStorage.getItem('optionsCalculatorInputs');
+                if (!saved) return;
+                const data = JSON.parse(saved);
+                
+                if (data.marketIndex !== undefined) {
+                    const tabs = document.querySelectorAll('.market-tab');
+                    tabs.forEach(tab => tab.classList.remove('active'));
+                    tabs[data.marketIndex]?.classList.add('active');
+                    marketIndex = data.marketIndex;
+                    const multiplierGroup = document.getElementById('multiplierGroup');
+                    if (marketIndex === 1) {
+                        multiplierGroup.style.display = 'block';
+                    } else {
+                        multiplierGroup.style.display = 'none';
+                    }
+                }
+                if (data.strategyIndex !== undefined) {
+                    const buttons = document.querySelectorAll('.direction-btn');
+                    buttons.forEach(btn => btn.classList.remove('active'));
+                    buttons[data.strategyIndex]?.classList.add('active');
+                    strategyIndex = data.strategyIndex;
+                    document.getElementById('currentSelection').textContent = data.strategyIndex === 0 ? 'Sell Call' : 'Sell Put';
+                }
+                if (data.strikePrice) document.getElementById('strikePrice').value = data.strikePrice;
+                if (data.expiryDate) document.getElementById('expiryDate').value = data.expiryDate;
+                if (data.premium) document.getElementById('premium').value = data.premium;
+                if (data.contractQuantity) document.getElementById('contractQuantity').value = data.contractQuantity;
+                if (data.multiplier) document.getElementById('multiplier').value = data.multiplier;
+                if (data.fee) document.getElementById('fee').value = data.fee;
+            } catch (e) {}
+        }
+        
+        // 为所有输入添加自动保存
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('.input, .select');
+            inputs.forEach(input => {
+                input.addEventListener('input', saveInputs);
+                input.addEventListener('change', saveInputs);
+            });
+        });
+        
+        // 初始化日期
+        function initDate() {
+            const today = new Date();
+            const formatDate = (date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+            
+            document.getElementById('expiryDate').value = formatDate(today);
+            // 设置最小日期为今天
+            document.getElementById('expiryDate').min = formatDate(today);
+        }
+        
+        // 市场选择
+        function switchMarket(element) {
+            const tabs = document.querySelectorAll('.market-tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            element.classList.add('active');
+            marketIndex = parseInt(element.dataset.index);
+            
+            // 显示或隐藏港股期权乘数输入
+            const multiplierGroup = document.getElementById('multiplierGroup');
+            if (marketIndex === 1) {
+                multiplierGroup.style.display = 'block';
+            } else {
+                multiplierGroup.style.display = 'none';
+            }
+            saveInputs();
+        }
+        
+        // 选择期权策略
+        function selectStrategy(element) {
+            const buttons = document.querySelectorAll('.direction-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+            strategyIndex = parseInt(element.dataset.type);
+            
+            // 更新显示
+            const strategyText = strategyIndex === 0 ? 'Sell Call' : 'Sell Put';
+            document.getElementById('currentSelection').textContent = strategyText;
+            saveInputs();
+        }
+        
+        // 切换公式显示
+        function toggleFormulas() {
+            const modal = document.getElementById('formulasModal');
+            if (modal.style.display === 'none') {
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            } else {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+        }
+        
+        // 计算预期年化收益
+        function calculate() {
+            // 验证输入
+            const strikePrice = document.getElementById('strikePrice').value;
+            const expiryDate = document.getElementById('expiryDate').value;
+            const premium = document.getElementById('premium').value;
+            const contractQuantity = document.getElementById('contractQuantity').value;
+            const fee = document.getElementById('fee').value;
+            
+            if (!strikePrice || !expiryDate || !premium || !contractQuantity || !fee) {
+                showToast('请填写所有必填字段');
+                return;
+            }
+            
+            // 转换数值
+            const strikePriceNum = parseFloat(strikePrice);
+            const premiumNum = parseFloat(premium);
+            const contractQuantityNum = parseFloat(contractQuantity);
+            const feeNum = parseFloat(fee) || 0;
+            // 确定乘数：美股默认为100，港股由用户输入
+            const multiplier = marketIndex === 0 ? 100 : parseFloat(document.getElementById('multiplier').value) || 1000;
+            
+            // 验证数值有效性
+            if (strikePriceNum <= 0 || premiumNum <= 0 || contractQuantityNum <= 0 || multiplier <= 0 || feeNum < 0) {
+                showToast('请输入有效的数值');
+                return;
+            }
+            
+            const expiryDateObj = new Date(expiryDate);
+            // 使用东部时间(ET)计算当前日期
+            const getETDate = () => {
+                const now = new Date();
+                // 计算东部时间与UTC的偏移（EST: UTC-5, EDT: UTC-4）
+                const isDST = () => {
+                    const dstStart = new Date(now.getFullYear(), 2, 14); // 3月第二个星期日
+                    dstStart.setDate(14 - dstStart.getDay() + 7);
+                    const dstEnd = new Date(now.getFullYear(), 10, 7); // 11月第一个星期日
+                    dstEnd.setDate(7 - dstEnd.getDay() + 7);
+                    return now >= dstStart && now < dstEnd;
+                };
+                const offset = isDST() ? 4 : 5;
+                const etDate = new Date(now.getTime() - offset * 60 * 60 * 1000);
+                return etDate;
+            };
+            const today = getETDate();
+            
+            // 计算剩余天数
+            const timeDiff = expiryDateObj - today;
+            const daysToExpiry = Math.ceil(timeDiff / (1000 * 3600 * 24));
+            
+            if (daysToExpiry <= 0) {
+                showToast('到期日必须大于今天');
+                return;
+            }
+            
+            // 根据策略计算收益
+            let maxProfit, maxLoss, totalProfit, marginRequired, maintenanceMargin;
+            const strategy = strategyIndex === 0 ? '看涨期权' : '看跌期权';
+            
+            // 卖出期权
+            switch (strategy) {
+                case '看涨期权':
+                    maxProfit = premiumNum * contractQuantityNum * multiplier - feeNum;
+                    maxLoss = '无限';
+                    totalProfit = premiumNum * contractQuantityNum * multiplier - feeNum;
+                    marginRequired = strikePriceNum * 1.0 * contractQuantityNum * multiplier;
+                    maintenanceMargin = marginRequired * 0.75;
+                    break;
+                case '看跌期权':
+                    maxProfit = premiumNum * contractQuantityNum * multiplier - feeNum;
+                    maxLoss = (strikePriceNum - premiumNum) * contractQuantityNum * multiplier + feeNum;
+                    totalProfit = premiumNum * contractQuantityNum * multiplier - feeNum;
+                    marginRequired = strikePriceNum * 1.0 * contractQuantityNum * multiplier;
+                    maintenanceMargin = marginRequired * 0.75;
+                    break;
+            }
+            
+            // 计算投资回报率
+            const returnOnInvestment = (totalProfit / marginRequired) * 100;
+            
+            // 计算年化收益率
+            const annualizedReturn = returnOnInvestment * (365 / daysToExpiry);
+            
+            // 计算盈亏平衡价格
+            const breakEvenPrice = strategyIndex === 0
+                ? strikePriceNum + premiumNum  // Sell Call
+                : strikePriceNum - premiumNum; // Sell Put
+            
+            // 更新结果
+            document.getElementById('totalProfit').textContent = formatCurrency(totalProfit);
+            document.getElementById('annualizedReturn').textContent = annualizedReturn.toFixed(2) + '%';
+            document.getElementById('returnOnInvestment').textContent = returnOnInvestment.toFixed(2) + '%';
+            document.getElementById('daysToExpiry').textContent = daysToExpiry + '天';
+            document.getElementById('maxProfit').textContent = formatCurrency(maxProfit);
+            document.getElementById('maxLoss').textContent = typeof maxLoss === 'number' ? formatCurrency(maxLoss) : maxLoss;
+            document.getElementById('marginRequired').textContent = formatCurrency(marginRequired);
+            document.getElementById('maintenanceMargin').textContent = formatCurrency(maintenanceMargin);
+            document.getElementById('breakEvenPrice').textContent = formatCurrency(breakEvenPrice);
+            
+            // 显示结果
+            document.getElementById('resultSection').style.display = 'block';
+            
+            // 滚动到结果区域
+            document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+            // 保存当前输入
+            saveInputs();
+            
+            // 绘制收益风险图表
+            setTimeout(() => drawProfitLossChart(strikePriceNum, premiumNum), 100);
+        }
+        
+        // 格式化货币显示
+        function formatCurrency(value) {
+            const marketSymbol = marketIndex === 0 ? '$' : 'HK$';
+            return marketSymbol + value.toFixed(2);
+        }
+        
+        // 显示提示信息
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.75); color: #fff; padding: 12px 24px; border-radius: 6px; font-size: 14px; z-index: 9999;';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        }
+        
+        // 绘制收益风险图表
+        function drawProfitLossChart(strikePrice, premium) {
+            const canvas = document.getElementById('profitLossChart');
+            const ctx = canvas.getContext('2d');
+            
+            // 设置画布尺寸
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * 2;
+            canvas.height = rect.height * 2;
+            ctx.scale(2, 2);
+            
+            const canvasWidth = rect.width;
+            const canvasHeight = rect.height;
+            const centerY = canvasHeight / 2;
+            
+            // 清空画布
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+            
+            // 绘制坐标轴
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(canvasWidth, centerY);
+            ctx.stroke();
+            
+            // 绘制零线标签
+            ctx.font = '10px Arial';
+            ctx.fillStyle = '#999';
+            ctx.fillText('0', 5, centerY - 5);
+            // Y轴标注
+            ctx.fillText('收益', 5, 14);
+            
+            // 计算价格范围
+            const minPrice = Math.max(0, strikePrice * 0.5);
+            const maxPrice = strikePrice * 1.5;
+            const priceRange = maxPrice - minPrice;
+            
+            // 找出最大利润用于缩放
+            const maxProfitValue = premium * 2;
+            
+            // 绘制收益曲线
+            ctx.strokeStyle = '#1890ff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            for (let i = 0; i <= canvasWidth; i++) {
+                const price = minPrice + (i / canvasWidth) * priceRange;
+                let profit = 0;
+                const strategy = strategyIndex === 0 ? '看涨期权' : '看跌期权';
+                
+                // 卖出期权
+                switch (strategy) {
+                    case '看涨期权':
+                        profit = premium - Math.max(0, price - strikePrice);
+                        break;
+                    case '看跌期权':
+                        profit = premium - Math.max(0, strikePrice - price);
+                        break;
+                }
+                
+                // 映射到画布坐标
+                const scaleFactor = (centerY - 30) / maxProfitValue;
+                const y = centerY - profit * scaleFactor;
+                
+                if (i === 0) {
+                    ctx.moveTo(i, y);
+                } else {
+                    ctx.lineTo(i, y);
+                }
+            }
+            
+            ctx.stroke();
+            
+            // 计算盈亏平衡点
+            const breakEvenPrice = strategyIndex === 0
+                ? strikePrice + premium  // Sell Call: 行权价 + 权利金
+                : strikePrice - premium; // Sell Put: 行权价 - 权利金
+            
+            // 绘制盈亏平衡线（垂直虚线）
+            const beX = ((breakEvenPrice - minPrice) / priceRange) * canvasWidth;
+            if (beX >= 0 && beX <= canvasWidth) {
+                ctx.strokeStyle = '#52c41a';
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.moveTo(beX, 0);
+                ctx.lineTo(beX, canvasHeight);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // 盈亏平衡标签
+                ctx.font = '10px Arial';
+                ctx.fillStyle = '#52c41a';
+                ctx.fillText('盈亏平衡', Math.max(2, beX - 24), canvasHeight - 6);
+            }
+            
+            // 绘制行权价线
+            const strikePriceX = ((strikePrice - minPrice) / priceRange) * canvasWidth;
+            ctx.strokeStyle = '#ff4d4f';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath();
+            ctx.moveTo(strikePriceX, 0);
+            ctx.lineTo(strikePriceX, canvasHeight);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // 绘制行权价标签
+            ctx.font = '10px Arial';
+            ctx.fillStyle = '#ff4d4f';
+            ctx.fillText('行权价', Math.max(5, strikePriceX - 20), 12);
+            
+            // 绘制价格标签
+            ctx.fillStyle = '#666';
+            ctx.fillText('$' + minPrice.toFixed(0), 5, canvasHeight - 5);
+            ctx.fillText('$' + maxPrice.toFixed(0), canvasWidth - 30, canvasHeight - 5);
+            
+            // 绘制图例
+            const legendY = 8;
+            const legendItems = [
+                { color: '#1890ff', label: '收益曲线' },
+                { color: '#ff4d4f', label: '行权价' },
+                { color: '#52c41a', label: '盈亏平衡' }
+            ];
+            let legendX = canvasWidth - 10;
+            // 从右向左绘制
+            for (let i = legendItems.length - 1; i >= 0; i--) {
+                const item = legendItems[i];
+                const textWidth = ctx.measureText(item.label).width;
+                const itemWidth = textWidth + 16;
+                legendX -= itemWidth;
+                ctx.fillStyle = item.color;
+                ctx.fillRect(legendX, legendY, 10, 10);
+                ctx.fillStyle = '#666';
+                ctx.font = '10px Arial';
+                ctx.fillText(item.label, legendX + 14, legendY + 9);
+            }
+        }
+        
+        // 清除保存的数据
+        function clearData() {
+            if (confirm('确定要清除所有已保存的数据吗？')) {
+                localStorage.removeItem('optionsCalculatorInputs');
+                // 重置输入为默认值
+                document.getElementById('strikePrice').value = '20';
+                document.getElementById('premium').value = '0.8';
+                document.getElementById('contractQuantity').value = '1';
+                document.getElementById('multiplier').value = '1000';
+                document.getElementById('fee').value = '2.52';
+                const today = new Date();
+                const formatDate = (date) => {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                };
+                document.getElementById('expiryDate').value = formatDate(today);
+                // 重置市场/策略选择
+                document.querySelectorAll('.market-tab').forEach(t => t.classList.remove('active'));
+                document.querySelector('.market-tab[data-index="0"]').classList.add('active');
+                marketIndex = 0;
+                document.getElementById('multiplierGroup').style.display = 'none';
+                document.querySelectorAll('.direction-btn').forEach(b => b.classList.remove('active'));
+                document.querySelector('.direction-btn[data-type="1"]').classList.add('active');
+                strategyIndex = 1;
+                document.getElementById('currentSelection').textContent = 'Sell Put';
+                // 隐藏结果
+                document.getElementById('resultSection').style.display = 'none';
+                showToast('数据已清除');
+            }
+        }
+        
+        // 离线状态检测
+        function updateOnlineStatus() {
+            const indicator = document.getElementById('offlineIndicator');
+            if (!navigator.onLine) {
+                indicator.classList.add('show');
+            } else {
+                indicator.classList.remove('show');
+            }
+        }
+        
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        
+        // 初始化
+        window.onload = function() {
+            initDate();
+            loadInputs();
+            updateOnlineStatus();
+        };
+        
+        // 注册 Service Worker（部署到 HTTPS 服务器后生效，本地 file:// 协议不支持）
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                // 检测是否为 HTTP(S) 协议（file:// 下会失败，静默处理）
+                if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+                    navigator.serviceWorker.register('service-worker.js')
+                        .then(reg => {
+                            console.log('Service Worker 注册成功', reg.scope);
+                        })
+                        .catch(err => {
+                            console.log('Service Worker 注册失败（本地文件模式正常现象）', err);
+                        });
+                }
+            });
+        }
+    </script>
+</body>
+</html>
