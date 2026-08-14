@@ -37,7 +37,7 @@
         .container {
             max-width: 600px;
             margin: 0 auto;
-            padding: 12px;
+            padding: 12px 12px 28px;
             background-color: #fff;
             min-height: 100vh;
         }
@@ -179,6 +179,14 @@
         
         .button-secondary:active {
             background-color: #5319b0;
+        }
+        
+        .button-tertiary {
+            background-color: #888;
+        }
+        
+        .button-tertiary:active {
+            background-color: #666;
         }
         
         /* 计算结果 */
@@ -386,7 +394,7 @@
         /* 响应式设计 */
         @media (max-width: 375px) {
             .container {
-                padding: 8px;
+                padding: 8px 8px 24px;
             }
             
             .section {
@@ -446,7 +454,7 @@
             
             .container {
                 max-width: 960px;
-                padding: 24px;
+                padding: 24px 24px 32px;
                 border-radius: 12px;
                 margin: 20px auto;
                 min-height: auto;
@@ -523,7 +531,7 @@
         /* 安全区域适配 */
         @supports (padding-bottom: env(safe-area-inset-bottom)) {
             .container {
-                padding-bottom: env(safe-area-inset-bottom);
+                padding-bottom: max(28px, env(safe-area-inset-bottom));
             }
         }
         
@@ -605,7 +613,7 @@
         <div class="button-group">
             <button class="button" onclick="calculate()">计算预期年化收益</button>
             <button class="button button-secondary" onclick="toggleFormulas()">计算过程</button>
-            <button class="button" style="background-color: #888; margin-top: 4px; font-size: 13px; padding: 8px;" onclick="clearData()">清除数据</button>
+            <button class="button button-tertiary" onclick="clearData()">清除数据</button>
         </div>
 
         <!-- 计算结果 -->
